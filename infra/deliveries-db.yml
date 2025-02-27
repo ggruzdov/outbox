@@ -1,0 +1,10 @@
+services:
+  deliveries-db:
+    image: postgres:16.4
+    container_name: deliveries-db
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: deliveries

@@ -1,0 +1,57 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: delivery-service
+  autoconfigure:
+    exclude: org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
+  docker:
+    compose:
+      skip:
+        in-tests: false
+      stop:
+        command: down
+      file: infra/deliveries-db.yml
+  datasource:
+    username: user
+    password: password
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5433}/deliveries
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    consumer:
+      auto-offset-reset: earliest
+      group-id: ${spring.application.name}
+      enable-auto-commit: false
+      heartbeat-interval: 5s
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        # We have to specify where to delegate deserialization from ErrorHandlingDeserializer
+        spring.deserializer.key.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: com.ginthub.ggruzdov.outbox.deliveryservice.messaging.event.Outbox
+        spring.json.key.default.type: java.lang.Integer
+        spring.json.use.type.headers: false
+      max-poll-records: 100
+    listener:
+      observation-enabled: true
+      type: single
+#      missing-topics-fatal: true
+      concurrency: 1
+  jpa:
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+messaging:
+  queues:
+    orders: order_outbox
+  retry:
+    init-interval: 1000 # ms
+    max-interval: 5000  # ms
+    multiplier: 1.2

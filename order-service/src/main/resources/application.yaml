@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: order-service
+  autoconfigure:
+    exclude: org.springframework.boot.actuate.autoconfigure.tracing.zipkin.ZipkinAutoConfiguration
+  docker:
+    compose:
+      skip:
+        in-tests: false
+      stop:
+        command: down
+      file: infra/compose-infra.yml
+  datasource:
+    username: user
+    password: password
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/orders
+  jpa:
+    show-sql: true
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+  kafka:
+    admin:
+      fail-fast: true
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    template:
+      observation-enabled: true
+      default-topic: order_outbox
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+  web:
+    resources:
+      add-mappings: false
+
+outbox:
+  commit:
+    size: 10
+    autoFlushDelay: PT5S
+  reconcile:
+    cron: PT2M
+    lockAtLeastFor: PT30S
+    lockAtMostFor: PT4M

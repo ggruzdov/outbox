@@ -69,7 +69,7 @@ although it comes with some caveats. In this demo project we implement mix of th
 1. A client places an order via HTTP.
 2. The request is handled by OrderService. It stores data into operational tables and outbox table transactionally.
 3. When the transaction gets commited it sends a message to Kafka.
-4. When a message is successfully sent it marks the outbox record in DB as "processed".
+4. When a message is successfully sent the service marks the outbox record in DB as "processed".
 5. Then all of interested services listen to the event(in our case it is only DeliveryService).
 6. DeliveryService does its business logic. Commits message offset if everything went fine, otherwise retries the message.
 
@@ -86,19 +86,19 @@ for _business_ exceptions, and, most importantly, not to get into infinite retry
 ## Outbox-starter
 ![](outbox-starter.drawio.svg)
 
-<span style="color:Aqua">**Parent app flow(order-service in our case)**</span>
+### $\color{BlueGreen}{Parent\ app\ flow(order-service\ in\ our\ case\)}$
 1. Each time an application wants to change some data in its DB and notify other services about the change, it does 
-necessary logic in one transaction and saves some payload as a message body via OutboxService bean. 
+necessary logic and saves some payload as a message body via OutboxService bean in one transaction.
 2. OutboxService retrieves current tracing data to be able to restore traceId in case of failures.
 3. OutboxService saves data into Outbox table(configurable, default is _outbox_).
 4. After transaction commit the parent app sends a message via OutboxSender. By default, there is a KafkaOutboxSender configured,
 but can be overridden by any other implementation.
 
-<span style="color:LightPink">**Outbox reconcile flow**</span>
+### $\color{Salmon}{Outbox\ reconcile\ flow}$
 1. There is a Spring Boot scheduler configured alongside with SchedLock library to make our application consistent in case 
 of scaling. Scheduled interval is configurable, default is 3 minutes. Note that **it should not run too often**, every 2 minutes 
 is the lowest interval. Why do we need the scheduler? Well, in distributed environment components are usually ephemeral, 
-so there can be cases when we send a message but don't commit it in DB, so the scheduler will handle it. Since we don't know
+so there can be cases when we sent a message but didn't commit it in DB, so the scheduler will handle it. Since we don't know
 what was the reason of failure(whether it was delivered or not) **message duplication is inevitable**! One way to handle it 
 is to have some idempotency identifier. In our case we have a unique constraint for _order_id_ in DeliveryService, so we handle 
 message duplication gracefully. In the worst case scenario we can track a message log in additional table.
@@ -106,8 +106,8 @@ message duplication gracefully. In the worst case scenario we can track a messag
 3. The Scheduler restores trace context via TraceContextUtil.
 4. The Scheduler sends a message via OutboxSender in original trace context.
 
-<span style="color:LightGreen">**Message send flow**</span>
-1. OutboxSender sends a message to Kafka with default producer retry policy.
+### $\color{Green}{Message\ send\ flow}$
+1. OutboxSender sends a message to Kafka with default producer retry policy(max integer times).
 2. OutboxSender commits the message. In this demo we use BufferedOutboxCommiter which puts messages into a queue and commit them by batches overtime 
 or when buffer size is reached(size is configurable, default is 10). We have additional scheduler to autocommit processed messages in order not to 
 keep them uncommited for too long if we do not have orders for some time.
@@ -117,7 +117,7 @@ keep them uncommited for too long if we do not have orders for some time.
 There are four directories:
 1. __order-service__ - main order processor, handles requests from clients.
 2. __delivery-service__ - arranges deliveries for orders. Asynchronously communicates with order-service via Kafka.
-3. __outbox-starter__ - library which incorporates all the components we need for reliable outbox-pattern.
+3. __outbox-starter__ - library which incorporates all the components we need for reliable outbox-pattern implementation.
 4. __infra__ - docker compose files for databases and Kafka cluster.
 
 # Getting started

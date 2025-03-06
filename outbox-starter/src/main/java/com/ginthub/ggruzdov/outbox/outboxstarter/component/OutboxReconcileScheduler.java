@@ -1,7 +1,8 @@
-package com.ginthub.ggruzdov.outbox.orderservice.component;
+package com.ginthub.ggruzdov.outbox.outboxstarter.component;
 
-import com.ginthub.ggruzdov.outbox.orderservice.model.OrderOutbox;
-import com.ginthub.ggruzdov.outbox.orderservice.repository.OrderOutboxRepository;
+
+import com.ginthub.ggruzdov.outbox.outboxstarter.model.Outbox;
+import com.ginthub.ggruzdov.outbox.outboxstarter.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -17,12 +18,12 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class OutboxReconcileScheduler {
 
-    private final MessageSender messageSender;
+    private final OutboxSender outboxSender;
     private final TraceContextUtil traceContextUtil;
-    private final OrderOutboxRepository orderOutboxRepository;
+    private final OutboxRepository outboxRepository;
 
     @Transactional
-    @Scheduled(fixedDelayString = "${outbox.reconcile.cron}")
+    @Scheduled(fixedDelayString = "${outbox.reconcile.interval:PT3M}")
     @SchedulerLock(
         name = "outbox_reconcile",
         lockAtLeastFor = "${outbox.reconcile.lockAtLeastFor}",
@@ -31,9 +32,9 @@ public class OutboxReconcileScheduler {
     public void reconcile() {
         log.info("Reconciling orders");
         var count = new AtomicInteger();
-        try(Stream<OrderOutbox> orderOutboxStream = orderOutboxRepository.findAllUnprocessed()) {
+        try(Stream<Outbox> orderOutboxStream = outboxRepository.findAllUnprocessed()) {
             orderOutboxStream.forEach(orderOutbox -> {
-                traceContextUtil.executeInTraceContext(orderOutbox.getTraceparent(), () -> messageSender.send(orderOutbox));
+                traceContextUtil.executeInTraceContext(orderOutbox.getTraceparent(), () -> outboxSender.send(orderOutbox));
                 count.getAndIncrement();
             });
         } catch (Exception ex) {

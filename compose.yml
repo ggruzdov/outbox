@@ -1,0 +1,54 @@
+include:
+  - infra/orders-db.yml
+  - infra/deliveries-db.yml
+  - infra/kafka-cluster.yml
+
+services:
+  delivery-svc1:
+    image: ggruzdov/outbox-delivery:1.0
+    container_name: delivery-svc1
+    environment:
+      - 'POSTGRES_HOST=deliveries-db'
+      - 'POSTGRES_PORT=5432'
+      - 'SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092'
+    ports:
+      - '8081:8081'
+    depends_on:
+      deliveries-db:
+        condition: service_started
+    restart: always
+  delivery-svc2:
+    image: ggruzdov/outbox-delivery:1.0
+    container_name: delivery-svc2
+    environment:
+      - 'POSTGRES_HOST=deliveries-db'
+      - 'POSTGRES_PORT=5432'
+      - 'SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092'
+    depends_on:
+      deliveries-db:
+        condition: service_started
+    restart: always
+  delivery-svc3:
+    image: ggruzdov/outbox-delivery:1.0
+    container_name: delivery-svc3
+    environment:
+      - 'POSTGRES_HOST=deliveries-db'
+      - 'POSTGRES_PORT=5432'
+      - 'SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092'
+    depends_on:
+      deliveries-db:
+        condition: service_started
+    restart: always
+  order-svc:
+    image: ggruzdov/outbox-order:1.0
+    container_name: order-svc
+    environment:
+      - 'POSTGRES_HOST=orders-db'
+      - 'POSTGRES_PORT=5432'
+      - 'SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka1:29092,kafka2:29092,kafka3:29092'
+    ports:
+      - '8080:8080'
+    depends_on:
+      orders-db:
+        condition: service_started
+    restart: always

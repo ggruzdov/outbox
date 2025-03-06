@@ -28,6 +28,9 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "request_id", nullable = false)
+    private String requestId;
+
     @Column(name = "customer_id", nullable = false)
     private Integer customerId;
 

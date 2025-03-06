@@ -47,9 +47,8 @@ public class ErrorHandlingConfig implements KafkaListenerConfigurer {
 
     private ConsumerRecordRecoverer consumerRecordRecoverer() {
         return (consumerRecord, exception) -> {
-            switch (exception.getCause()) {
-                case MethodArgumentNotValidException ife -> logValidationErrors(ife);
-                default -> log.error("Exception occurred", exception.getCause());
+            if (exception.getCause() instanceof MethodArgumentNotValidException ife) {
+                logValidationErrors(ife);
             }
         };
     }

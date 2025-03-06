@@ -1,14 +1,4 @@
 services:
-  orders-db:
-    image: postgres:16.4
-    container_name: orders-db
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: orders
-
   kafka1:
     image: confluentinc/cp-kafka:7.7.0
     container_name: kafka1

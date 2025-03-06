@@ -9,7 +9,6 @@ public record DeliveryDetailsResponse(
     String status,
     Instant deliveryDate
 ) {
-
     public static DeliveryDetailsResponse from(Delivery delivery) {
         return new DeliveryDetailsResponse(delivery.getId(), delivery.getStatus(), delivery.getDeliveryDate());
     }

@@ -6,7 +6,6 @@ import com.ginthub.ggruzdov.outbox.deliveryservice.repository.DeliveryRepository
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.time.Instant;
@@ -24,10 +23,9 @@ public class DeliveryService {
         return deliveryRepository.findByOrderId(orderId);
     }
 
-    @Transactional
     public Delivery create(OrderCreatedEvent orderCreatedEvent) {
-        // Exception emulation to check message retry correctness
-        if (random.nextInt(1, 8) != 4) {
+        // Exception imitation to check message retry correctness
+        if (random.nextInt(1, 5) != 3) {
             throw new HttpClientErrorException(HttpStatus.INTERNAL_SERVER_ERROR, "Third party integration failed");
         }
         var delivery = Delivery.builder()

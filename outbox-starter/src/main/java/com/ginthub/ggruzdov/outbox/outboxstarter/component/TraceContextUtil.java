@@ -1,8 +1,8 @@
-package com.ginthub.ggruzdov.outbox.orderservice.component;
+package com.ginthub.ggruzdov.outbox.outboxstarter.component;
 
+import io.micrometer.tracing.Span;
 import io.micrometer.tracing.TraceContext;
 import io.micrometer.tracing.Tracer;
-import io.micrometer.tracing.Span;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,7 +17,7 @@ public class TraceContextUtil {
     public String getTraceparent() {
         var span = tracer.currentSpan();
         if (span == null) {
-            log.warn("No trace parent");
+            log.warn("No traceparent");
             return null;
         }
 
